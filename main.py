@@ -2,6 +2,7 @@ import pandas as pd
 import sqlalchemy as sa
 import os
 import openpyxl
+from millify import millify
 
 rates_file = "/home/taylor/workspace/ncahp/rates/data/SFY 2026 Standard Plan Rate Exhibits w PCs_2025.06.04.xlsx"
 
@@ -66,13 +67,57 @@ def aggregate_data(sheet):
         "underwriting_cost": underwriting_cost
     }
 
-def main():
-    total_MM = 0
-    wb = openpyxl.load_workbook(rates_file, data_only=True)
+def get_data_by_category(sheet):
+    data = []
+ 
+
+    for row in sheet["B16:X41"]:
+        row_data = {}
+        region = sheet["C3"].value
+        coa = sheet["C4"].value
+        MM = sheet["C7"].value
+
+        category = row[0].value
+        base_pmpm = row[1].value
+        trend = row[4].value
+        mcs = row[21].value
+        pc = row[10].value
+        sfy26_pmpm = row[22].value
+        gross_pmpm = base_pmpm * ((1+trend)**(24/12)) * (1+pc)
+        mcs_sav_pmpm = gross_pmpm * mcs
+        
+        cost = sfy26_pmpm * MM
+        savings = mcs_sav_pmpm * MM
+
+        row_data["region"] = region
+        row_data["coa"] = coa
+        row_data["MM"] = MM
+        row_data["category"] = category
+        row_data["base_pmpm"] = base_pmpm
+        row_data["trend"] = trend
+        row_data["mcs"] = mcs
+        row_data["pc"] = pc
+        row_data["sfy26_pmpm"] = sfy26_pmpm
+        row_data["gross_pmpm"] = gross_pmpm
+        row_data["mcs_sav_pmpm"] = mcs_sav_pmpm
+        row_data["cost"] = cost
+        row_data["savings"] = savings
+
+        data.append(row_data)
+
+    return data
+
+def load_valid_sheets(file):
+    wb = openpyxl.load_workbook(file, data_only=True)
     valid_sheets = []
     for sheet in wb.sheetnames:
         if sheet.startswith("R"):
             valid_sheets.append(sheet)
+    return valid_sheets
+
+def savings_report(file):
+    total_MM = 0
+    valid_sheets = load_valid_sheets(file)
 
     data_list = []
     total_savings = 0
@@ -85,8 +130,7 @@ def main():
     underwriting_grand_total_cost = 0
 
     for sheet in valid_sheets:
-
-        data = aggregate_data(wb[sheet])
+        data = aggregate_data(sheet)
         total_MM += data["MM"]
         total_savings += data["sav"]
         grand_total_cost += data["cost"]
@@ -125,5 +169,48 @@ def main():
     print(f"Total Savings Percentage: {total_savings/grand_total_cost*100:.2f}%")
     print("+"*50)
 
+
+def savings_by_category(file):
+    all_data = []
+    valid_sheets = load_valid_sheets(file)
+    wb = openpyxl.load_workbook(file, data_only=True)
+    for sheet in valid_sheets:
+        data = get_data_by_category(wb[sheet])
+        all_data.extend(data)
+    df = pd.DataFrame(all_data)
+    df.to_csv("mcs_saving2.csv")
+
+    return df
+
+def main():
+    savings_report()
+
 if __name__ == "__main__":
-    main()
+    mcs_savings_df = savings_by_category(rates_file)
+    mcs_by_category = mcs_savings_df.groupby("category").agg({"cost": "sum", "savings": "sum"})
+    mcs_by_category["cost"] = mcs_by_category["cost"]
+    mcs_by_category["savings"] = mcs_by_category["savings"]
+    cost = mcs_by_category["cost"].sum()
+    savings = mcs_by_category["savings"].sum()
+    savings_pct = savings/cost*100
+
+
+    mcs_by_category = mcs_by_category.sort_values(by="savings", ascending=True)
+    display_data = mcs_by_category.copy()
+    display_data = display_data.iloc[:3]
+    display_data = display_data.reset_index()
+    display_data = display_data.set_index("category")
+    display_data.to_csv("mcs_by_category.csv")
+
+    display_data["savings_pct"] = display_data["savings"]/display_data["cost"]*100
+    display_data["savings_pct"] = display_data["savings_pct"].apply(lambda x: f"{x:,.2f}%")
+    display_data["cost"] = display_data["cost"].apply(lambda x: millify(x, precision=2))
+    display_data["savings"] = display_data["savings"].apply(lambda x: millify(x, precision=2))
+    print(display_data)
+
+    print("-"*50)
+    print(f"Total Cost: {millify(cost, precision=2)}")
+    print(f"Total Savings: {millify(savings, precision=2)}")
+    print(f"Total Savings Percentage: {savings_pct:.2f}%")
+    print("-"*50)
+    
