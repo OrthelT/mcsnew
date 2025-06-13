@@ -81,7 +81,7 @@ def get_data_by_category(sheet):
         base_pmpm = row[1].value
         trend = row[4].value
         mcs = row[21].value
-        pc = row[10].value
+        pc = row[7].value
         sfy26_pmpm = row[22].value
         gross_pmpm = base_pmpm * ((1+trend)**(24/12)) * (1+pc)
         mcs_sav_pmpm = gross_pmpm * mcs
@@ -118,6 +118,7 @@ def load_valid_sheets(file):
 def savings_report(file):
     total_MM = 0
     valid_sheets = load_valid_sheets(file)
+    wb = openpyxl.load_workbook(file, data_only=True)
 
     data_list = []
     total_savings = 0
@@ -130,6 +131,7 @@ def savings_report(file):
     underwriting_grand_total_cost = 0
 
     for sheet in valid_sheets:
+        sheet = wb[sheet]
         data = aggregate_data(sheet)
         total_MM += data["MM"]
         total_savings += data["sav"]
@@ -183,9 +185,7 @@ def savings_by_category(file):
     return df
 
 def main():
-    savings_report()
-
-if __name__ == "__main__":
+    savings_report(rates_file)
     mcs_savings_df = savings_by_category(rates_file)
     mcs_by_category = mcs_savings_df.groupby("category").agg({"cost": "sum", "savings": "sum"})
     mcs_by_category["cost"] = mcs_by_category["cost"]
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     display_data = display_data.iloc[:3]
     display_data = display_data.reset_index()
     display_data = display_data.set_index("category")
-    display_data.to_csv("mcs_by_category.csv")
+    display_data.to_csv("SFY26_mcs_by_category.csv")
 
     display_data["savings_pct"] = display_data["savings"]/display_data["cost"]*100
     display_data["savings_pct"] = display_data["savings_pct"].apply(lambda x: f"{x:,.2f}%")
@@ -214,3 +214,6 @@ if __name__ == "__main__":
     print(f"Total Savings Percentage: {savings_pct:.2f}%")
     print("-"*50)
     
+
+if __name__ == "__main__":
+    main()
