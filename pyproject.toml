@@ -10,6 +10,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "pandas>=2.3.0",
     "plotly>=6.1.2",
+    "seaborn>=0.13.0",
     "sqlalchemy>=2.0.41",
     "sqlalchemy-orm>=1.2.10",
 ]
