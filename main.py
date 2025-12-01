@@ -4,7 +4,7 @@ import os
 import openpyxl
 from millify import millify
 
-rates_file = "/home/taylor/workspace/ncahp/rates/data/SFY 2026 Standard Plan Rate Exhibits w PCs_2025.06.04.xlsx"
+rates_file = "data/SFY 2026 Standard Plan Rate Exhibits w PCs_2025.06.04.xlsx"
 
 def calculate_sfy26_pmpm(base_pmpm,trend,pc,mcs):
 
