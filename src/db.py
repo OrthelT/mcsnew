@@ -68,6 +68,18 @@ def init_db(engine=None):
         if session.query(FiscalYear).count() == 0:
             fiscal_years = [
                 FiscalYear(
+                    sfy_id=2022, 
+                    sfy_name="SFY 2022",
+                    contract_start=date(2021, 7, 1),
+                    contract_end=date(2022, 6, 30)
+                ),
+                FiscalYear(
+                    sfy_id=2023, 
+                    sfy_name="SFY 2023",
+                    contract_start=date(2022, 7, 1),
+                    contract_end=date(2023, 6, 30)
+                ),
+                FiscalYear(
                     sfy_id=2024, 
                     sfy_name="SFY 2024",
                     contract_start=date(2024, 1, 1),

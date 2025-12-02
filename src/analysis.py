@@ -283,6 +283,10 @@ def generate_summary_text() -> str:
     top_categories = category_summary.head(5)
     
     # Build summary text
+    # Determine SFY range
+    min_sfy = int(df['sfy_id'].min())
+    max_sfy = int(df['sfy_id'].max())
+    
     lines = [
         "=" * 80,
         "NORTH CAROLINA MEDICAID MANAGED CARE SAVINGS ANALYSIS",
@@ -291,7 +295,7 @@ def generate_summary_text() -> str:
         "EXECUTIVE SUMMARY",
         "-" * 40,
         "",
-        f"Total Managed Care Savings (SFY 2024-2026): ${total_savings:,.0f}",
+        f"Total Managed Care Savings (SFY {min_sfy}-{max_sfy}): ${total_savings:,.0f}",
         f"Total Member Months: {total_member_months:,.0f}",
         f"Estimated Members Served: {total_members:,.0f}",
         "",

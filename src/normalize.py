@@ -14,6 +14,7 @@ import re
 RATE_CELL_MAPPINGS = {
     # ABD variations
     "ABD": "ABD",
+    "ABD All": "ABD",  # SFY22-23 format
     "Aged, Blind, Disabled": "ABD",
     
     # TANF Newborn variations
@@ -33,7 +34,7 @@ RATE_CELL_MAPPINGS = {
     "Maternity": "MAT",
     "MAT": "MAT",
     
-    # Newly Eligible variations
+    # Newly Eligible variations (not present in SFY22-23)
     "Newly Elig 19-24": "NE (19 - 24)",
     "NE (19 - 24)": "NE (19 - 24)",
     
@@ -154,6 +155,46 @@ class ColumnConfig:
 # Note: Using 0-based column indices
 
 SFY_CONFIGS: Dict[int, ColumnConfig] = {
+    2022: ColumnConfig(
+        sfy=2022,
+        member_months_cell=(7, 1),  # Row 8, Column B (0-indexed: row 7, col 1)
+        header_row=14,
+        data_start_row=16,  # First data row
+        data_end_row=39,    # End before Total row
+        total_row=39,
+        category_col=0,    # Column A - Category of Service
+        base_pmpm_col=1,   # Column B - Base PMPM
+        base_unit_cost_col=2,  # Column C - Base Unit Cost
+        base_util_col=3,   # Column D - Base Util
+        trend_pmpm_col=4,  # Column E - Trend factor
+        trend_unit_cost_col=5,  # Column F - Trend Unit Cost
+        trend_util_col=6,  # Column G - Trend Util
+        program_changes_col=7,  # Column H - Program Changes
+        mcs_adjustment_col=8,   # Column I - Managed Care Adjustment
+        total_medical_pmpm_col=9,  # Column J - Total Medical PMPM
+        total_medical_unit_cost_col=10,  # Column K - Total Medical Unit Cost
+        total_medical_util_col=11,  # Column L - Total Medical Util
+    ),
+    2023: ColumnConfig(
+        sfy=2023,
+        member_months_cell=(7, 1),  # Row 8, Column B (0-indexed: row 7, col 1)
+        header_row=14,
+        data_start_row=16,  # First data row
+        data_end_row=39,    # End before Total row
+        total_row=39,
+        category_col=0,    # Column A - Category of Service
+        base_pmpm_col=1,   # Column B - Base PMPM
+        base_unit_cost_col=2,  # Column C - Base Unit Cost
+        base_util_col=3,   # Column D - Base Util
+        trend_pmpm_col=4,  # Column E - Trend factor
+        trend_unit_cost_col=5,  # Column F - Trend Unit Cost
+        trend_util_col=6,  # Column G - Trend Util
+        program_changes_col=7,  # Column H - Program Changes
+        mcs_adjustment_col=8,   # Column I - Managed Care Adjustment
+        total_medical_pmpm_col=9,  # Column J - Total Medical PMPM
+        total_medical_unit_cost_col=10,  # Column K - Total Medical Unit Cost
+        total_medical_util_col=11,  # Column L - Total Medical Util
+    ),
     2024: ColumnConfig(
         sfy=2024,
         member_months_cell=(7, 1),  # Row 8, Column B (0-indexed: row 7, col 1)
@@ -228,6 +269,12 @@ def get_sfy_from_filename(filename: str) -> int:
     # Check for SFY2024 (be careful not to match publication dates)
     elif "SFY24" in filename or "SFY_24" in filename:
         return 2024
+    # Check for SFY2023
+    elif "SFY23" in filename or "SFY_23" in filename:
+        return 2023
+    # Check for SFY2022
+    elif "SFY2022" in filename or "SFY_2022" in filename or "SFY22" in filename:
+        return 2022
     raise ValueError(f"Cannot determine SFY from filename: {filename}")
 
 

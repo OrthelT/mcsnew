@@ -33,9 +33,11 @@ COLORS = {
 }
 
 SFY_COLORS = {
-    2024: '#1e3a5f',
-    2025: '#3d7ea6', 
-    2026: '#5fb49c',
+    2022: '#0d1f2d',  # Darkest navy
+    2023: '#1e3a5f',  # Dark navy
+    2024: '#3d7ea6',  # Medium blue
+    2025: '#5fb49c',  # Teal green
+    2026: '#89c4f4',  # Light blue
 }
 
 
@@ -248,25 +250,30 @@ def plot_regional_comparison_by_year(save: bool = True) -> plt.Figure:
     """Create grouped bar chart comparing regional savings across years."""
     # Get data for all years
     all_data = []
-    for sfy in [2024, 2025, 2026]:
+    sfy_list = [2022, 2023, 2024, 2025, 2026]
+    for sfy in sfy_list:
         df = get_summary_by_region(sfy)
-        df['SFY'] = sfy
-        all_data.append(df)
+        if len(df) > 0:
+            df['SFY'] = sfy
+            all_data.append(df)
     
     combined = pd.concat(all_data, ignore_index=True)
+    
+    # Get unique SFYs that have data
+    available_sfys = sorted(combined['SFY'].unique())
     
     # Pivot for grouped bar chart
     pivot = combined.pivot(index='Region', columns='SFY', values='Total Savings')
     
-    fig, ax = plt.subplots(figsize=(12, 7))
+    fig, ax = plt.subplots(figsize=(14, 7))
     
     x = range(len(pivot.index))
-    width = 0.25
+    width = 0.15  # Narrower bars for 5 years
     
-    for i, sfy in enumerate([2024, 2025, 2026]):
-        offset = (i - 1) * width
+    for i, sfy in enumerate(available_sfys):
+        offset = (i - len(available_sfys) / 2 + 0.5) * width
         bars = ax.bar([xi + offset for xi in x], pivot[sfy], width, 
-                      label=f'SFY {sfy}', color=SFY_COLORS[sfy],
+                      label=f'SFY {sfy}', color=SFY_COLORS.get(sfy, COLORS['primary']),
                       edgecolor='white', linewidth=1)
     
     ax.set_xlabel('Region', fontsize=12, fontweight='bold')
