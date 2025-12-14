@@ -5,14 +5,14 @@ NORTH CAROLINA MEDICAID MANAGED CARE SAVINGS ANALYSIS
 EXECUTIVE SUMMARY
 ----------------------------------------
 
-Total Managed Care Savings (SFY 2022-2026): $1,578,926,691
+Total Managed Care Savings (SFY 2022-2026): $1,624,137,989
 Total Member Months: 118,379,631
 Estimated Members Served: 9,864,969
 
 SAVINGS BY FISCAL YEAR
 ----------------------------------------
-  SFY 2022: $476,564,596
-  SFY 2023: $706,748,640
+  SFY 2022: $494,317,830
+  SFY 2023: $734,206,704
   SFY 2024: $197,726,119
   SFY 2025: $91,450,068
   SFY 2026: $106,437,268
@@ -37,7 +37,7 @@ TOP SAVINGS CATEGORIES (SFY 2026)
 KEY FINDINGS
 ----------------------------------------
 
-- Managed care has generated over $1578.9 million in savings
+- Managed care has generated over $1624.1 million in savings
 - Savings benefit approximately 9,864,969 Medicaid members
 - Consistent savings achieved across all six NC regions
 - Largest savings in hospital and prescription drug categories

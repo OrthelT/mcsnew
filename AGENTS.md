@@ -26,17 +26,24 @@ Capitation rate files (.xlxs) for NC Medicaid managed care plans from SFY 2024 t
 ### Methodology for Managed Care Savings Analysis
 These figures are calculated from the managed care savings factors given in Mercer’s rate calculation for each fiscal year. Note that this refers to the schema for the SFY2026 file. SFY24 and SFY25 may be slightly different. Ensure that data us mapped consistently across each file. 
 
+**Important:** The trend period varies by fiscal year:
+- SFY 2022 & 2023: Use 42 months of trend
+- SFY >= 2024: Use 24 months of trend
+
 For each region-COA sheet we:
 1. Start with the Current Year base PMPM in column C.  
-2. Apply 24 months of trend: `Base × (1 + Trend)^(24/12)` (column F).  
+2. Apply trend based on SFY:
+   - SFY 2022 & 2023: `Base × (1 + Trend)^(42/12)` (column F)
+   - SFY >= 2024: `Base × (1 + Trend)^(24/12)` (column F)  
 3. Layer in program changes: multiply by `(1 + PC)` (column I).  
 4. The result is the *pre-MCS* PMPM.  
 Multiplying that amount by the MCS percentage in column W yields the PMPM reduction attributable to managed-care efficiencies.  
-5. Dollar savings = PMPM reduction × FY-26 member-months (cell C7).  
+5. Dollar savings = PMPM reduction × member-months for the fiscal year.  
    We perform this calculation for every category and sum across regions.
 
-Formula reference:  
-Capitation Rate = Base × (1 + Trend)^(24/12) × (1 + PC) × (1 + MCS)
+Formula reference:  
+- SFY >= 2024: Capitation Rate = Base × (1 + Trend)^(24/12) × (1 + PC) × (1 + MCS)
+- SFY 2022 & 2023: Capitation Rate = Base × (1 + Trend)^(42/12) × (1 + PC) × (1 + MCS)
 
 This calculation is applied to medical costs prior to application of continuous coverage unwinding acuity adjustment, care management, premium taxes, and non-benefit expenses. 
 

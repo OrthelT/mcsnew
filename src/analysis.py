@@ -3,7 +3,9 @@
 Methodology from AGENTS.md:
 For each region-rate_cell sheet:
 1. Start with the Current Year base PMPM in column C.
-2. Apply 24 months of trend: Base × (1 + Trend)^(24/12) (column F).
+2. Apply trend: Base × (1 + Trend)^(trend_months/12)
+   - SFY 2022 & 2023: 42 months of trend
+   - SFY >= 2024: 24 months of trend
 3. Layer in program changes: multiply by (1 + PC) (column I).
 4. The result is the *pre-MCS* PMPM.
 5. Multiplying that amount by the MCS percentage yields the PMPM reduction 
@@ -11,7 +13,8 @@ For each region-rate_cell sheet:
 6. Dollar savings = PMPM reduction × member-months.
 
 Formula reference:
-Capitation Rate = Base × (1 + Trend)^(24/12) × (1 + PC) × (1 + MCS)
+- SFY >= 2024: Capitation Rate = Base × (1 + Trend)^(24/12) × (1 + PC) × (1 + MCS)
+- SFY 2022 & 2023: Capitation Rate = Base × (1 + Trend)^(42/12) × (1 + PC) × (1 + MCS)
 """
 
 from typing import Dict, List, Any, Optional
@@ -69,6 +72,7 @@ def calculate_savings(
     program_changes_factor: float,
     mcs_factor: float,
     member_months: float,
+    sfy_id: int,
 ) -> Dict[str, float]:
     """
     Calculate managed care savings using the methodology from AGENTS.md.
@@ -79,6 +83,7 @@ def calculate_savings(
         program_changes_factor: Program changes factor (e.g., 0.008 for 0.8%)
         mcs_factor: Managed Care Savings factor (e.g., -0.05 for -5%)
         member_months: Number of member months
+        sfy_id: State Fiscal Year ID (2022, 2023, 2024, 2025, 2026, etc.)
     
     Returns:
         Dictionary with calculation results
@@ -96,9 +101,16 @@ def calculate_savings(
     program_changes_factor = program_changes_factor or 0.0
     mcs_factor = mcs_factor or 0.0
     
-    # Step 1-2: Apply 24 months of trend
-    # trend_pmpm = base_pmpm × (1 + trend)^(24/12)
-    trended_pmpm = base_pmpm * ((1 + trend_factor) ** (24 / 12))
+    # Determine trend months based on SFY
+    # SFY 2022 & 2023 use 42 months, SFY >= 2024 use 24 months
+    if sfy_id in [2022, 2023]:
+        trend_months = 42
+    else:
+        trend_months = 24
+    
+    # Step 1-2: Apply trend based on SFY
+    # trend_pmpm = base_pmpm × (1 + trend)^(trend_months/12)
+    trended_pmpm = base_pmpm * ((1 + trend_factor) ** (trend_months / 12))
     
     # Step 3: Layer in program changes
     # pre_mcs_pmpm = trended_pmpm × (1 + PC)
@@ -174,6 +186,7 @@ def analyze_savings(sfy_filter: Optional[int] = None) -> pd.DataFrame:
                 program_changes_factor=rate_data.program_changes_pmpm,
                 mcs_factor=rate_data.mcs_adjustment,
                 member_months=rate_data.member_months,
+                sfy_id=rate_data.sfy_id,
             )
             
             result = SavingsResult(

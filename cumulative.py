@@ -102,6 +102,3 @@ for y, annual, cumul in zip(years, savings, cumulative_savings):
     print(f'  SFY {y}: Annual {format_currency(annual):>10} | Cumulative {format_currency(cumul):>10}')
 print('-' * 50)
 print(f'  TOTAL CUMULATIVE SAVINGS: {format_currency(total)}')
-
-
-scatter
