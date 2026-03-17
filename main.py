@@ -23,7 +23,12 @@ from pathlib import Path
 from src.db import init_db, reset_db, get_session
 from src.extract import extract_all_files
 from src.load import load_records, clear_rate_data
-from src.analysis import generate_summary_text, get_summary_by_sfy
+from src.analysis import (
+    generate_summary_text,
+    get_summary_by_sfy,
+    generate_contribution_summary_text,
+    get_contribution_summary_by_sfy,
+)
 from src.visualize import generate_all_visualizations
 from src.models import RateData
 
@@ -93,6 +98,18 @@ def run_analysis():
         print(f"    Total Savings: ${savings:,.0f}")
         print(f"    Members Served: {members:,.0f}")
         print()
+
+    # NEW: Add contribution analysis
+    print("\n" + "=" * 60)
+    print("Cost Factor Contribution Analysis")
+    print("=" * 60)
+
+    print(generate_contribution_summary_text())
+
+    print("\nDETAILED CONTRIBUTION BREAKDOWN:")
+    print("-" * 40)
+    contrib_summary = get_contribution_summary_by_sfy()
+    print(contrib_summary.to_string(index=False))
 
 
 def run_visualizations():

@@ -66,6 +66,80 @@ class SavingsResult:
         }
 
 
+@dataclass
+class ContributionResult:
+    """Container for cost factor contribution analysis results."""
+    # Identifiers
+    sfy_id: int
+    region_id: int
+    rate_cell_id: int
+    cos_id: int
+    category_name: str
+    region_name: str
+    rate_cell_name: str
+    member_months: float
+
+    # Base values
+    base_pmpm: float
+    final_pmpm: float
+
+    # Factor values
+    trend_factor: float
+    program_changes_factor: float
+    mcs_factor: float
+
+    # PMPM Impacts (sequential)
+    trend_pmpm_impact: float           # Trend increases PMPM by this amount
+    pc_pmpm_impact: float              # PC increases/decreases PMPM by this
+    mcs_pmpm_impact: float             # MCS reduces PMPM by this (negative)
+    net_pmpm_change: float             # Total change from base to final
+
+    # Dollar Impacts
+    trend_dollar_impact: float         # Total $ added by trend
+    pc_dollar_impact: float            # Total $ added/subtracted by PC
+    mcs_dollar_impact: float           # Total $ saved by MCS
+    net_dollar_change: float           # Net $ change
+
+    # Percentage Contributions (of absolute impacts)
+    trend_pct_contribution: float      # Trend as % of total movement
+    pc_pct_contribution: float         # PC as % of total movement
+    mcs_pct_contribution: float        # MCS as % of total movement
+
+    # Intermediate calculations (for verification)
+    trended_pmpm: float
+    pre_mcs_pmpm: float
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'sfy_id': self.sfy_id,
+            'region_id': self.region_id,
+            'rate_cell_id': self.rate_cell_id,
+            'cos_id': self.cos_id,
+            'category_name': self.category_name,
+            'region_name': self.region_name,
+            'rate_cell_name': self.rate_cell_name,
+            'member_months': self.member_months,
+            'base_pmpm': self.base_pmpm,
+            'final_pmpm': self.final_pmpm,
+            'trend_factor': self.trend_factor,
+            'program_changes_factor': self.program_changes_factor,
+            'mcs_factor': self.mcs_factor,
+            'trend_pmpm_impact': self.trend_pmpm_impact,
+            'pc_pmpm_impact': self.pc_pmpm_impact,
+            'mcs_pmpm_impact': self.mcs_pmpm_impact,
+            'net_pmpm_change': self.net_pmpm_change,
+            'trend_dollar_impact': self.trend_dollar_impact,
+            'pc_dollar_impact': self.pc_dollar_impact,
+            'mcs_dollar_impact': self.mcs_dollar_impact,
+            'net_dollar_change': self.net_dollar_change,
+            'trend_pct_contribution': self.trend_pct_contribution,
+            'pc_pct_contribution': self.pc_pct_contribution,
+            'mcs_pct_contribution': self.mcs_pct_contribution,
+            'trended_pmpm': self.trended_pmpm,
+            'pre_mcs_pmpm': self.pre_mcs_pmpm,
+        }
+
+
 def calculate_savings(
     base_pmpm: float,
     trend_factor: float,
@@ -132,6 +206,108 @@ def calculate_savings(
         'pre_mcs_pmpm': pre_mcs_pmpm,
         'mcs_reduction_pmpm': mcs_reduction_pmpm,
         'dollar_savings': dollar_savings,
+        'final_pmpm': final_pmpm,
+    }
+
+
+def calculate_factor_contributions(
+    base_pmpm: float,
+    trend_factor: float,
+    program_changes_factor: float,
+    mcs_factor: float,
+    member_months: float,
+    sfy_id: int,
+) -> Dict[str, float]:
+    """
+    Calculate contribution of each factor (Trend, PC, MCS) to capitation costs.
+
+    This decomposes the capitation rate formula to show how much each factor
+    contributes in both PMPM and dollar terms.
+
+    Args:
+        base_pmpm: Base PMPM from historical data
+        trend_factor: Trend adjustment factor (e.g., 0.034 for 3.4%)
+        program_changes_factor: Program changes factor (e.g., 0.008 for 0.8%)
+        mcs_factor: Managed Care Savings factor (e.g., -0.05 for -5%)
+        member_months: Number of member months
+        sfy_id: State Fiscal Year ID (2022, 2023, 2024, 2025, 2026)
+
+    Returns:
+        Dictionary with decomposed contribution calculations
+    """
+    # Handle None values
+    if any(v is None for v in [base_pmpm, trend_factor, member_months]):
+        return {
+            'trend_pmpm_impact': 0.0,
+            'pc_pmpm_impact': 0.0,
+            'mcs_pmpm_impact': 0.0,
+            'trend_dollar_impact': 0.0,
+            'pc_dollar_impact': 0.0,
+            'mcs_dollar_impact': 0.0,
+            'net_pmpm_change': 0.0,
+            'net_dollar_change': 0.0,
+            'trend_pct_contribution': 0.0,
+            'pc_pct_contribution': 0.0,
+            'mcs_pct_contribution': 0.0,
+            'trended_pmpm': 0.0,
+            'pre_mcs_pmpm': 0.0,
+            'final_pmpm': 0.0,
+        }
+
+    # Default factors
+    program_changes_factor = program_changes_factor or 0.0
+    mcs_factor = mcs_factor or 0.0
+
+    # Determine trend months based on SFY
+    trend_months = 42 if sfy_id in [2022, 2023] else 24
+
+    # Sequential calculation with decomposition
+    # Step 1: Apply trend
+    trend_multiplier = (1 + trend_factor) ** (trend_months / 12)
+    trended_pmpm = base_pmpm * trend_multiplier
+    trend_pmpm_impact = trended_pmpm - base_pmpm
+
+    # Step 2: Apply program changes
+    pre_mcs_pmpm = trended_pmpm * (1 + program_changes_factor)
+    pc_pmpm_impact = pre_mcs_pmpm - trended_pmpm
+
+    # Step 3: Apply MCS
+    final_pmpm = pre_mcs_pmpm * (1 + mcs_factor)
+    mcs_pmpm_impact = final_pmpm - pre_mcs_pmpm
+
+    # Net change
+    net_pmpm_change = final_pmpm - base_pmpm
+
+    # Dollar impacts
+    trend_dollar_impact = trend_pmpm_impact * member_months
+    pc_dollar_impact = pc_pmpm_impact * member_months
+    mcs_dollar_impact = mcs_pmpm_impact * member_months
+    net_dollar_change = net_pmpm_change * member_months
+
+    # Percentage contributions (using absolute values)
+    total_abs_impact = abs(trend_dollar_impact) + abs(pc_dollar_impact) + abs(mcs_dollar_impact)
+
+    if total_abs_impact > 0:
+        trend_pct = abs(trend_dollar_impact) / total_abs_impact * 100
+        pc_pct = abs(pc_dollar_impact) / total_abs_impact * 100
+        mcs_pct = abs(mcs_dollar_impact) / total_abs_impact * 100
+    else:
+        trend_pct = pc_pct = mcs_pct = 0.0
+
+    return {
+        'trend_pmpm_impact': trend_pmpm_impact,
+        'pc_pmpm_impact': pc_pmpm_impact,
+        'mcs_pmpm_impact': mcs_pmpm_impact,
+        'net_pmpm_change': net_pmpm_change,
+        'trend_dollar_impact': trend_dollar_impact,
+        'pc_dollar_impact': pc_dollar_impact,
+        'mcs_dollar_impact': mcs_dollar_impact,
+        'net_dollar_change': net_dollar_change,
+        'trend_pct_contribution': trend_pct,
+        'pc_pct_contribution': pc_pct,
+        'mcs_pct_contribution': mcs_pct,
+        'trended_pmpm': trended_pmpm,
+        'pre_mcs_pmpm': pre_mcs_pmpm,
         'final_pmpm': final_pmpm,
     }
 
@@ -217,6 +393,95 @@ def analyze_savings(sfy_filter: Optional[int] = None) -> pd.DataFrame:
         session.close()
 
 
+def analyze_contributions(sfy_filter: Optional[int] = None) -> pd.DataFrame:
+    """
+    Analyze contribution of each factor (Trend, PC, MCS) to capitation costs.
+
+    Args:
+        sfy_filter: Optional filter for specific fiscal year
+
+    Returns:
+        DataFrame with contribution analysis results
+    """
+    session = get_session()
+
+    try:
+        # Build query (same as analyze_savings)
+        query = session.query(
+            RateData,
+            Region.region_name,
+            Region.region_abbrev,
+            RateCell.rate_cell_name,
+            RateCell.rate_cell_abbrev,
+            CategoryOfService.cos_name,
+        ).join(
+            Region, RateData.region_id == Region.region_id
+        ).join(
+            RateCell, RateData.rate_cell_id == RateCell.rate_cell_id
+        ).join(
+            CategoryOfService, RateData.cos_id == CategoryOfService.cos_id
+        )
+
+        if sfy_filter is not None:
+            query = query.filter(RateData.sfy_id == int(sfy_filter))
+
+        results = []
+
+        for row in query.all():
+            rate_data = row[0]
+            region_name = row[1]
+            region_abbrev = row[2]
+            rate_cell_name = row[3]
+            rate_cell_abbrev = row[4]
+            cos_name = row[5]
+
+            # Calculate contributions
+            contributions = calculate_factor_contributions(
+                base_pmpm=rate_data.base_pmpm,
+                trend_factor=rate_data.trend_pmpm,
+                program_changes_factor=rate_data.program_changes_pmpm,
+                mcs_factor=rate_data.mcs_adjustment,
+                member_months=rate_data.member_months,
+                sfy_id=rate_data.sfy_id,
+            )
+
+            result = ContributionResult(
+                sfy_id=rate_data.sfy_id,
+                region_id=rate_data.region_id,
+                rate_cell_id=rate_data.rate_cell_id,
+                cos_id=rate_data.cos_id,
+                category_name=cos_name,
+                region_name=region_name,
+                rate_cell_name=rate_cell_name,
+                member_months=rate_data.member_months or 0,
+                base_pmpm=rate_data.base_pmpm or 0,
+                final_pmpm=contributions['final_pmpm'],
+                trend_factor=rate_data.trend_pmpm or 0,
+                program_changes_factor=rate_data.program_changes_pmpm or 0,
+                mcs_factor=rate_data.mcs_adjustment or 0,
+                trend_pmpm_impact=contributions['trend_pmpm_impact'],
+                pc_pmpm_impact=contributions['pc_pmpm_impact'],
+                mcs_pmpm_impact=contributions['mcs_pmpm_impact'],
+                net_pmpm_change=contributions['net_pmpm_change'],
+                trend_dollar_impact=contributions['trend_dollar_impact'],
+                pc_dollar_impact=contributions['pc_dollar_impact'],
+                mcs_dollar_impact=contributions['mcs_dollar_impact'],
+                net_dollar_change=contributions['net_dollar_change'],
+                trend_pct_contribution=contributions['trend_pct_contribution'],
+                pc_pct_contribution=contributions['pc_pct_contribution'],
+                mcs_pct_contribution=contributions['mcs_pct_contribution'],
+                trended_pmpm=contributions['trended_pmpm'],
+                pre_mcs_pmpm=contributions['pre_mcs_pmpm'],
+            )
+
+            results.append(result.to_dict())
+
+        return pd.DataFrame(results)
+
+    finally:
+        session.close()
+
+
 def get_summary_by_sfy() -> pd.DataFrame:
     """Get savings summary aggregated by fiscal year."""
     df = analyze_savings()
@@ -273,6 +538,68 @@ def get_summary_by_rate_cell(sfy_filter: Optional[int] = None) -> pd.DataFrame:
     summary['total_members'] = summary['member_months'] / 12
     summary.columns = ['SFY', 'Rate Cell', 'Member Months', 'Total Savings', 'Total Members']
     return summary
+
+
+def get_contribution_summary_by_sfy() -> pd.DataFrame:
+    """Get factor contribution summary aggregated by fiscal year."""
+    df = analyze_contributions()
+
+    summary = df.groupby('sfy_id').agg({
+        'member_months': 'sum',
+        'trend_dollar_impact': 'sum',
+        'pc_dollar_impact': 'sum',
+        'mcs_dollar_impact': 'sum',
+        'net_dollar_change': 'sum',
+        'base_pmpm': 'mean',
+        'final_pmpm': 'mean',
+    }).reset_index()
+
+    # Calculate percentage contributions for aggregated data
+    total_abs = (abs(summary['trend_dollar_impact']) +
+                 abs(summary['pc_dollar_impact']) +
+                 abs(summary['mcs_dollar_impact']))
+
+    summary['trend_pct'] = (abs(summary['trend_dollar_impact']) / total_abs * 100).round(1)
+    summary['pc_pct'] = (abs(summary['pc_dollar_impact']) / total_abs * 100).round(1)
+    summary['mcs_pct'] = (abs(summary['mcs_dollar_impact']) / total_abs * 100).round(1)
+
+    summary.columns = ['SFY', 'Member Months', 'Trend Impact ($)', 'PC Impact ($)',
+                       'MCS Impact ($)', 'Net Change ($)', 'Avg Base PMPM', 'Avg Final PMPM',
+                       'Trend %', 'PC %', 'MCS %']
+
+    return summary
+
+
+def get_contribution_summary_by_region(sfy_filter: Optional[int] = None) -> pd.DataFrame:
+    """Get factor contribution summary aggregated by region."""
+    df = analyze_contributions(sfy_filter)
+
+    summary = df.groupby(['sfy_id', 'region_name']).agg({
+        'trend_dollar_impact': 'sum',
+        'pc_dollar_impact': 'sum',
+        'mcs_dollar_impact': 'sum',
+        'net_dollar_change': 'sum',
+    }).reset_index()
+
+    summary.columns = ['SFY', 'Region', 'Trend Impact ($)', 'PC Impact ($)',
+                       'MCS Impact ($)', 'Net Change ($)']
+    return summary
+
+
+def get_contribution_summary_by_category(sfy_filter: Optional[int] = None) -> pd.DataFrame:
+    """Get factor contribution summary aggregated by category of service."""
+    df = analyze_contributions(sfy_filter)
+
+    summary = df.groupby(['sfy_id', 'category_name']).agg({
+        'trend_dollar_impact': 'sum',
+        'pc_dollar_impact': 'sum',
+        'mcs_dollar_impact': 'sum',
+        'net_dollar_change': 'sum',
+    }).reset_index()
+
+    summary.columns = ['SFY', 'Category', 'Trend Impact ($)', 'PC Impact ($)',
+                       'MCS Impact ($)', 'Net Change ($)']
+    return summary.sort_values(['SFY', 'Net Change ($)'], ascending=[True, False])
 
 
 def generate_summary_text() -> str:
@@ -350,6 +677,73 @@ def generate_summary_text() -> str:
         "=" * 80,
     ])
     
+    return "\n".join(lines)
+
+
+def generate_contribution_summary_text() -> str:
+    """Generate text summary of cost factor contributions for presentations."""
+    df = analyze_contributions()
+    sfy_summary = get_contribution_summary_by_sfy()
+
+    # Overall aggregates
+    total_trend_impact = df['trend_dollar_impact'].sum()
+    total_pc_impact = df['pc_dollar_impact'].sum()
+    total_mcs_impact = df['mcs_dollar_impact'].sum()
+    total_net_change = df['net_dollar_change'].sum()
+
+    # Calculate overall percentages
+    total_abs = abs(total_trend_impact) + abs(total_pc_impact) + abs(total_mcs_impact)
+    overall_trend_pct = abs(total_trend_impact) / total_abs * 100 if total_abs > 0 else 0
+    overall_pc_pct = abs(total_pc_impact) / total_abs * 100 if total_abs > 0 else 0
+    overall_mcs_pct = abs(total_mcs_impact) / total_abs * 100 if total_abs > 0 else 0
+
+    min_sfy = int(df['sfy_id'].min())
+    max_sfy = int(df['sfy_id'].max())
+
+    lines = [
+        "=" * 80,
+        "NORTH CAROLINA MEDICAID CAPITATION COST FACTOR CONTRIBUTION ANALYSIS",
+        "=" * 80,
+        "",
+        "EXECUTIVE SUMMARY",
+        "-" * 40,
+        "",
+        f"Analysis Period: SFY {min_sfy}-{max_sfy}",
+        "",
+        "OVERALL DOLLAR IMPACT:",
+        f"  Cost Trend Impact:        ${total_trend_impact:>15,.0f}  ({overall_trend_pct:>5.1f}%)",
+        f"  Program Changes Impact:   ${total_pc_impact:>15,.0f}  ({overall_pc_pct:>5.1f}%)",
+        f"  Managed Care Savings:     ${total_mcs_impact:>15,.0f}  ({overall_mcs_pct:>5.1f}%)",
+        f"  ───────────────────────────────────────────────────────",
+        f"  Net Change from Base:     ${total_net_change:>15,.0f}",
+        "",
+        "CONTRIBUTION BY FISCAL YEAR",
+        "-" * 40,
+    ]
+
+    for _, row in sfy_summary.iterrows():
+        sfy = int(row['SFY'])
+        lines.extend([
+            f"\nSFY {sfy}:",
+            f"  Trend:             ${row['Trend Impact ($)']:>12,.0f}  ({row['Trend %']:>5.1f}%)",
+            f"  Program Changes:   ${row['PC Impact ($)']:>12,.0f}  ({row['PC %']:>5.1f}%)",
+            f"  MCS:               ${row['MCS Impact ($)']:>12,.0f}  ({row['MCS %']:>5.1f}%)",
+            f"  Net Change:        ${row['Net Change ($)']:>12,.0f}",
+        ])
+
+    lines.extend([
+        "",
+        "KEY INSIGHTS",
+        "-" * 40,
+        "",
+        f"- Cost trend is the primary driver, contributing {overall_trend_pct:.1f}% to rate changes",
+        f"- Managed care savings offset {abs(overall_mcs_pct):.1f}% of cost increases",
+        f"- Program changes contribute {overall_pc_pct:.1f}% to overall cost movement",
+        f"- Net impact: ${total_net_change/1e6:.1f}M change from base capitation rates",
+        "",
+        "=" * 80,
+    ])
+
     return "\n".join(lines)
 
 

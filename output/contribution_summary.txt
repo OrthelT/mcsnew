@@ -1,0 +1,58 @@
+================================================================================
+NORTH CAROLINA MEDICAID CAPITATION COST FACTOR CONTRIBUTION ANALYSIS
+================================================================================
+
+EXECUTIVE SUMMARY
+----------------------------------------
+
+Analysis Period: SFY 2022-2026
+
+OVERALL DOLLAR IMPACT:
+  Cost Trend Impact:        $  3,739,198,307  ( 39.8%)
+  Program Changes Impact:   $  4,205,210,983  ( 44.7%)
+  Managed Care Savings:     $ -1,458,487,642  ( 15.5%)
+  ───────────────────────────────────────────────────────
+  Net Change from Base:     $  6,485,921,648
+
+CONTRIBUTION BY FISCAL YEAR
+----------------------------------------
+
+SFY 2022:
+  Trend:             $ 617,477,374  ( 23.2%)
+  Program Changes:   $1,581,316,155  ( 59.4%)
+  MCS:               $-462,675,971  ( 17.4%)
+  Net Change:        $1,736,117,558
+
+SFY 2023:
+  Trend:             $ 725,762,822  ( 23.4%)
+  Program Changes:   $1,692,533,439  ( 54.6%)
+  MCS:               $-683,315,998  ( 22.0%)
+  Net Change:        $1,734,980,263
+
+SFY 2024:
+  Trend:             $ 612,229,458  ( 54.5%)
+  Program Changes:   $ 330,182,126  ( 29.4%)
+  MCS:               $-180,140,100  ( 16.0%)
+  Net Change:        $ 762,271,484
+
+SFY 2025:
+  Trend:             $ 882,353,580  ( 77.0%)
+  Program Changes:   $ 224,123,751  ( 19.6%)
+  MCS:               $ -39,065,372  (  3.4%)
+  Net Change:        $1,067,411,959
+
+SFY 2026:
+  Trend:             $ 901,375,073  ( 65.7%)
+  Program Changes:   $ 377,055,512  ( 27.5%)
+  MCS:               $ -93,290,201  (  6.8%)
+  Net Change:        $1,185,140,384
+
+KEY INSIGHTS
+----------------------------------------
+
+- Cost trend is the primary driver, contributing 39.8% to rate changes
+- Managed care savings offset 15.5% of cost increases
+- Program changes contribute 44.7% to overall cost movement
+- Net impact: $6485.9M change from base capitation rates
+
+================================================================================

@@ -230,10 +230,10 @@ SFY_CONFIGS: Dict[int, ColumnConfig] = {
         trend_unit_cost_col=6,  # Column G
         trend_util_col=7,  # Column H
         program_changes_col=8,  # Column I
-        mcs_adjustment_col=28,  # Managed Care Adjustment
-        total_medical_pmpm_col=29,  # Total Medical PMPM
-        total_medical_unit_cost_col=30,  # Total Medical Unit Cost
-        total_medical_util_col=31,  # Total Medical Util
+        mcs_adjustment_col=29,  # Column AD - Managed Care Adjustment
+        total_medical_pmpm_col=30,  # Column AE - Total Medical PMPM
+        total_medical_unit_cost_col=31,  # Column AF - Total Medical Unit Cost
+        total_medical_util_col=32,  # Column AG - Total Medical Util
     ),
     2026: ColumnConfig(
         sfy=2026,
