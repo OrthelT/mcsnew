@@ -26,14 +26,17 @@ from src.load import load_records, clear_rate_data
 from src.analysis import (
     generate_summary_text,
     get_summary_by_sfy,
+    get_summary_by_period,
     generate_contribution_summary_text,
     get_contribution_summary_by_sfy,
 )
 from src.visualize import generate_all_visualizations
 from src.models import RateData
 
-
-DATA_DIR = Path(__file__).parent / "data"
+# Current-year files (SFY 2024-2026)
+CAP_RATES_DIR = Path(__file__).parent / "cap_rates"
+# Archive files (SFY 2022-2023)
+ARCHIVE_DIR = Path(__file__).parent / "archive" / "data"
 
 
 def run_etl(reset: bool = False):
@@ -64,7 +67,7 @@ def run_etl(reset: bool = False):
     print("Extracting data from Excel files...")
     print("-" * 40)
     
-    records = extract_all_files(DATA_DIR)
+    records = extract_all_files([CAP_RATES_DIR, ARCHIVE_DIR])
     
     # Load into database
     print("\n" + "-" * 40)
@@ -89,7 +92,7 @@ def run_analysis():
     print("\nDETAILED BREAKDOWN BY FISCAL YEAR:")
     print("-" * 40)
     sfy_summary = get_summary_by_sfy()
-    
+
     for _, row in sfy_summary.iterrows():
         sfy = int(row['SFY'])
         savings = row['Total Savings']
@@ -98,6 +101,15 @@ def run_analysis():
         print(f"    Total Savings: ${savings:,.0f}")
         print(f"    Members Served: {members:,.0f}")
         print()
+
+    # Show SFY 2024 sub-period breakdown
+    print("SFY 2024 RATE PERIOD BREAKDOWN:")
+    print("-" * 40)
+    period_summary = get_summary_by_period()
+    sfy2024_periods = period_summary[period_summary['SFY'] == 2024]
+    for _, row in sfy2024_periods.iterrows():
+        print(f"  {row['Period']}: ${row['Total Savings']:,.0f}  ({row['Member Months']:,.0f} member-months)")
+    print()
 
     # NEW: Add contribution analysis
     print("\n" + "=" * 60)

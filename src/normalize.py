@@ -1,7 +1,82 @@
 """Tab name normalization and column mapping for NC Medicaid rate files."""
 
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
+from dataclasses import dataclass
+from datetime import date
 import re
+
+
+@dataclass
+class PeriodInfo:
+    """Metadata for a single rate-setting period."""
+    period_id: int
+    sfy_id: int
+    period_name: str
+    period_start: date
+    period_end: date
+    months_in_period: int   # Length of this rate period
+    trend_months: int       # Actuarial trend months used in the rate file
+    source_filename: str
+
+
+# All known source files with their period metadata.
+# SFY 2024 is split into three sub-periods; all others are full fiscal years.
+PERIOD_DEFINITIONS: List[PeriodInfo] = [
+    PeriodInfo(
+        period_id=1, sfy_id=2022,
+        period_name="SFY 2022",
+        period_start=date(2021, 7, 1), period_end=date(2022, 6, 30),
+        months_in_period=12, trend_months=30,
+        source_filename="SFY2022_Standard_Plan_Rate_Book_Exhibits_37_through_67_20220215.xlsx",
+    ),
+    PeriodInfo(
+        period_id=2, sfy_id=2023,
+        period_name="SFY 2023",
+        period_start=date(2022, 7, 1), period_end=date(2023, 6, 30),
+        months_in_period=12, trend_months=42,
+        source_filename="SFY23_North_Carolina_Standard_Plan_Rate_Book_Exhibits_37_through_67_11.17.2022.xlsx",
+    ),
+    PeriodInfo(
+        period_id=3, sfy_id=2024,
+        period_name="Jul 2023 - Nov 2023",
+        period_start=date(2023, 7, 1), period_end=date(2023, 11, 30),
+        months_in_period=5, trend_months=24,
+        source_filename="SFY_2024_Jul23-Nov23_Standard_Plan_Rate_Book_Exhibits_37_67_20231115.xlsx",
+    ),
+    PeriodInfo(
+        period_id=4, sfy_id=2024,
+        period_name="Dec 2023",
+        period_start=date(2023, 12, 1), period_end=date(2023, 12, 31),
+        months_in_period=1, trend_months=24,
+        source_filename="SFY_2024_Dec23_North_Carolina_Standard_Plan_Rate_Book_Exhibits_68_122_20231115.xlsx",
+    ),
+    PeriodInfo(
+        period_id=5, sfy_id=2024,
+        period_name="Jan 2024 - Jun 2024",
+        period_start=date(2024, 1, 1), period_end=date(2024, 6, 30),
+        months_in_period=6, trend_months=24,
+        source_filename="SFY_2024_Jan24-Jun24_Standard_Plan_Rate_Book_Exhibits_12.19.2023.xlsx",
+    ),
+    PeriodInfo(
+        period_id=6, sfy_id=2025,
+        period_name="SFY 2025",
+        period_start=date(2024, 7, 1), period_end=date(2025, 6, 30),
+        months_in_period=12, trend_months=24,
+        source_filename="SFY_2025_Standard_Plan_Rate_Exhibits_w_PCs_2024.06.10.xlsx",
+    ),
+    PeriodInfo(
+        period_id=7, sfy_id=2026,
+        period_name="SFY 2026",
+        period_start=date(2025, 7, 1), period_end=date(2026, 6, 30),
+        months_in_period=12, trend_months=24,
+        source_filename="SFY_2026_Standard_Plan_Rate_Exhibits_w_PCs_2025.06.04.xlsx",
+    ),
+]
+
+# Fast lookup: exact filename → PeriodInfo
+FILENAME_TO_PERIOD: Dict[str, PeriodInfo] = {
+    p.source_filename: p for p in PERIOD_DEFINITIONS
+}
 
 # Tab name normalization patterns
 # Maps various tab naming conventions to standardized (region_id, rate_cell_abbrev) tuples
@@ -45,6 +120,7 @@ RATE_CELL_MAPPINGS = {
     "NE (35 - 44)": "NE (35 - 44)",
     
     "Newly Elig 45+": "NE (45+)",
+    "Newly Elig 45-64": "NE (45+)",  # SFY2024 uses this variant
     "NE (45+)": "NE (45+)",
 }
 

@@ -3,7 +3,7 @@ name = "rates"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "matplotlib>=3.10.3",
     "millify>=0.1.1",

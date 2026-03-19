@@ -5,40 +5,40 @@ NORTH CAROLINA MEDICAID MANAGED CARE SAVINGS ANALYSIS
 EXECUTIVE SUMMARY
 ----------------------------------------
 
-Total Managed Care Savings (SFY 2022-2026): $1,574,912,624
-Total Member Months: 118,379,631
-Estimated Members Served: 9,864,969
+Total Managed Care Savings (SFY 2022-2026): $1,570,326,625
+Total Member Months: 96,857,609
+Estimated Members Served: 8,071,467
 
 SAVINGS BY FISCAL YEAR
 ----------------------------------------
-  SFY 2022: $494,317,830
+  SFY 2022: $482,380,477
   SFY 2023: $734,206,704
-  SFY 2024: $197,726,119
+  SFY 2024: $189,117,351
   SFY 2025: $42,224,703
-  SFY 2026: $106,437,268
+  SFY 2026: $122,397,390
 
 REGIONAL SAVINGS (SFY 2026)
 ----------------------------------------
-  Region 1: $7,452,314
-  Region 2: $20,218,765
-  Region 3: $30,111,872
-  Region 4: $22,015,127
-  Region 5: $15,010,733
-  Region 6: $11,628,458
+  Region 1: $10,788,378
+  Region 2: $20,403,632
+  Region 3: $30,233,399
+  Region 4: $22,197,945
+  Region 5: $21,623,784
+  Region 6: $17,150,252
 
 TOP SAVINGS CATEGORIES (SFY 2026)
 ----------------------------------------
-  Inpatient - PH: $54,039,774
-  Prescribed Drugs: $24,688,250
-  Emergency Room - PH: $21,135,711
+  Inpatient - PH: $65,836,525
+  Prescribed Drugs: $25,514,152
+  Emergency Room - PH: $24,473,179
   Physician - Primary Care: $5,544,856
   Lab and X-ray: $1,028,677
 
 KEY FINDINGS
 ----------------------------------------
 
-- Managed care has generated over $1574.9 million in savings
-- Savings benefit approximately 9,864,969 Medicaid members
+- Managed care has generated over $1570.3 million in savings
+- Savings benefit approximately 8,071,467 Medicaid members
 - Consistent savings achieved across all six NC regions
 - Largest savings in hospital and prescription drug categories
 

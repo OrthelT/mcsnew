@@ -22,7 +22,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from .db import get_session
-from .models import RateData, Region, RateCell, CategoryOfService, FiscalYear
+from .models import RateData, Region, RateCell, CategoryOfService, FiscalYear, RatePeriod
 
 
 @dataclass
@@ -146,23 +146,22 @@ def calculate_savings(
     program_changes_factor: float,
     mcs_factor: float,
     member_months: float,
-    sfy_id: int,
+    trend_months: int,
 ) -> Dict[str, float]:
     """
     Calculate managed care savings using the methodology from AGENTS.md.
-    
+
     Args:
         base_pmpm: Base PMPM from historical data
-        trend_factor: Trend adjustment factor (e.g., 0.034 for 3.4%)
-        program_changes_factor: Program changes factor (e.g., 0.008 for 0.8%)
-        mcs_factor: Managed Care Savings factor (e.g., -0.05 for -5%)
-        member_months: Number of member months
-        sfy_id: State Fiscal Year ID (2022, 2023, 2024, 2025, 2026, etc.)
-    
+        trend_factor: Annual trend rate (e.g., 0.034 for 3.4%)
+        program_changes_factor: Program changes rate (e.g., 0.008 for 0.8%)
+        mcs_factor: Managed Care Savings rate — typically negative (e.g., -0.05)
+        member_months: Number of member months in the rate period
+        trend_months: Actuarial trend months for this rate period (from rate_periods table)
+
     Returns:
         Dictionary with calculation results
     """
-    # Handle None values
     if any(v is None for v in [base_pmpm, trend_factor, member_months]):
         return {
             'pre_mcs_pmpm': 0.0,
@@ -170,38 +169,16 @@ def calculate_savings(
             'dollar_savings': 0.0,
             'final_pmpm': 0.0,
         }
-    
-    # Default factors to 0 if None
+
     program_changes_factor = program_changes_factor or 0.0
     mcs_factor = mcs_factor or 0.0
-    
-    # Determine trend months based on SFY
-    # SFY 2022 & 2023 use 42 months, SFY >= 2024 use 24 months
-    if sfy_id in [2022, 2023]:
-        trend_months = 42
-    else:
-        trend_months = 24
-    
-    # Step 1-2: Apply trend based on SFY
-    # trend_pmpm = base_pmpm × (1 + trend)^(trend_months/12)
+
     trended_pmpm = base_pmpm * ((1 + trend_factor) ** (trend_months / 12))
-    
-    # Step 3: Layer in program changes
-    # pre_mcs_pmpm = trended_pmpm × (1 + PC)
     pre_mcs_pmpm = trended_pmpm * (1 + program_changes_factor)
-    
-    # Step 4-5: Calculate MCS reduction
-    # The MCS factor is typically negative (savings), so mcs_reduction will be negative
-    # mcs_reduction_pmpm = pre_mcs_pmpm × mcs_factor
     mcs_reduction_pmpm = pre_mcs_pmpm * mcs_factor
-    
-    # Dollar savings = |mcs_reduction_pmpm| × member_months
-    # We use absolute value because savings should be positive
     dollar_savings = abs(mcs_reduction_pmpm) * member_months
-    
-    # Final PMPM after MCS adjustment
     final_pmpm = pre_mcs_pmpm * (1 + mcs_factor)
-    
+
     return {
         'pre_mcs_pmpm': pre_mcs_pmpm,
         'mcs_reduction_pmpm': mcs_reduction_pmpm,
@@ -216,26 +193,22 @@ def calculate_factor_contributions(
     program_changes_factor: float,
     mcs_factor: float,
     member_months: float,
-    sfy_id: int,
+    trend_months: int,
 ) -> Dict[str, float]:
     """
     Calculate contribution of each factor (Trend, PC, MCS) to capitation costs.
 
-    This decomposes the capitation rate formula to show how much each factor
-    contributes in both PMPM and dollar terms.
-
     Args:
         base_pmpm: Base PMPM from historical data
-        trend_factor: Trend adjustment factor (e.g., 0.034 for 3.4%)
-        program_changes_factor: Program changes factor (e.g., 0.008 for 0.8%)
-        mcs_factor: Managed Care Savings factor (e.g., -0.05 for -5%)
-        member_months: Number of member months
-        sfy_id: State Fiscal Year ID (2022, 2023, 2024, 2025, 2026)
+        trend_factor: Annual trend rate (e.g., 0.034 for 3.4%)
+        program_changes_factor: Program changes rate (e.g., 0.008 for 0.8%)
+        mcs_factor: Managed Care Savings rate — typically negative (e.g., -0.05)
+        member_months: Number of member months in the rate period
+        trend_months: Actuarial trend months for this rate period (from rate_periods table)
 
     Returns:
         Dictionary with decomposed contribution calculations
     """
-    # Handle None values
     if any(v is None for v in [base_pmpm, trend_factor, member_months]):
         return {
             'trend_pmpm_impact': 0.0,
@@ -254,12 +227,8 @@ def calculate_factor_contributions(
             'final_pmpm': 0.0,
         }
 
-    # Default factors
     program_changes_factor = program_changes_factor or 0.0
     mcs_factor = mcs_factor or 0.0
-
-    # Determine trend months based on SFY
-    trend_months = 42 if sfy_id in [2022, 2023] else 24
 
     # Sequential calculation with decomposition
     # Step 1: Apply trend
@@ -315,17 +284,16 @@ def calculate_factor_contributions(
 def analyze_savings(sfy_filter: Optional[int] = None) -> pd.DataFrame:
     """
     Analyze managed care savings across all data in the database.
-    
+
     Args:
         sfy_filter: Optional filter for specific fiscal year
-    
+
     Returns:
         DataFrame with savings analysis results
     """
     session = get_session()
-    
+
     try:
-        # Build query
         query = session.query(
             RateData,
             Region.region_name,
@@ -333,38 +301,40 @@ def analyze_savings(sfy_filter: Optional[int] = None) -> pd.DataFrame:
             RateCell.rate_cell_name,
             RateCell.rate_cell_abbrev,
             CategoryOfService.cos_name,
+            RatePeriod.trend_months,
+            RatePeriod.period_name,
         ).join(
             Region, RateData.region_id == Region.region_id
         ).join(
             RateCell, RateData.rate_cell_id == RateCell.rate_cell_id
         ).join(
             CategoryOfService, RateData.cos_id == CategoryOfService.cos_id
+        ).join(
+            RatePeriod, RateData.period_id == RatePeriod.period_id
         )
-        
+
         if sfy_filter is not None:
-            # Convert numpy int to Python int for SQLAlchemy compatibility
             query = query.filter(RateData.sfy_id == int(sfy_filter))
-        
+
         results = []
-        
+
         for row in query.all():
             rate_data = row[0]
-            region_name = row[1]
-            region_abbrev = row[2]
-            rate_cell_name = row[3]
-            rate_cell_abbrev = row[4]
+            region_name, region_abbrev = row[1], row[2]
+            rate_cell_name, rate_cell_abbrev = row[3], row[4]
             cos_name = row[5]
-            
-            # Calculate savings
+            trend_months = row[6]
+            period_name = row[7]
+
             savings = calculate_savings(
                 base_pmpm=rate_data.base_pmpm,
                 trend_factor=rate_data.trend_pmpm,
                 program_changes_factor=rate_data.program_changes_pmpm,
                 mcs_factor=rate_data.mcs_adjustment,
                 member_months=rate_data.member_months,
-                sfy_id=rate_data.sfy_id,
+                trend_months=trend_months,
             )
-            
+
             result = SavingsResult(
                 sfy_id=rate_data.sfy_id,
                 region_id=rate_data.region_id,
@@ -383,12 +353,13 @@ def analyze_savings(sfy_filter: Optional[int] = None) -> pd.DataFrame:
                 dollar_savings=savings['dollar_savings'],
                 final_pmpm=savings['final_pmpm'],
             )
-            
-            results.append(result.to_dict())
-        
-        df = pd.DataFrame(results)
-        return df
-        
+
+            d = result.to_dict()
+            d['period_name'] = period_name
+            results.append(d)
+
+        return pd.DataFrame(results)
+
     finally:
         session.close()
 
@@ -406,7 +377,6 @@ def analyze_contributions(sfy_filter: Optional[int] = None) -> pd.DataFrame:
     session = get_session()
 
     try:
-        # Build query (same as analyze_savings)
         query = session.query(
             RateData,
             Region.region_name,
@@ -414,12 +384,16 @@ def analyze_contributions(sfy_filter: Optional[int] = None) -> pd.DataFrame:
             RateCell.rate_cell_name,
             RateCell.rate_cell_abbrev,
             CategoryOfService.cos_name,
+            RatePeriod.trend_months,
+            RatePeriod.period_name,
         ).join(
             Region, RateData.region_id == Region.region_id
         ).join(
             RateCell, RateData.rate_cell_id == RateCell.rate_cell_id
         ).join(
             CategoryOfService, RateData.cos_id == CategoryOfService.cos_id
+        ).join(
+            RatePeriod, RateData.period_id == RatePeriod.period_id
         )
 
         if sfy_filter is not None:
@@ -429,20 +403,19 @@ def analyze_contributions(sfy_filter: Optional[int] = None) -> pd.DataFrame:
 
         for row in query.all():
             rate_data = row[0]
-            region_name = row[1]
-            region_abbrev = row[2]
-            rate_cell_name = row[3]
-            rate_cell_abbrev = row[4]
+            region_name, region_abbrev = row[1], row[2]
+            rate_cell_name, rate_cell_abbrev = row[3], row[4]
             cos_name = row[5]
+            trend_months = row[6]
+            period_name = row[7]
 
-            # Calculate contributions
             contributions = calculate_factor_contributions(
                 base_pmpm=rate_data.base_pmpm,
                 trend_factor=rate_data.trend_pmpm,
                 program_changes_factor=rate_data.program_changes_pmpm,
                 mcs_factor=rate_data.mcs_adjustment,
                 member_months=rate_data.member_months,
-                sfy_id=rate_data.sfy_id,
+                trend_months=trend_months,
             )
 
             result = ContributionResult(
@@ -474,7 +447,9 @@ def analyze_contributions(sfy_filter: Optional[int] = None) -> pd.DataFrame:
                 pre_mcs_pmpm=contributions['pre_mcs_pmpm'],
             )
 
-            results.append(result.to_dict())
+            d = result.to_dict()
+            d['period_name'] = period_name
+            results.append(d)
 
         return pd.DataFrame(results)
 
@@ -538,6 +513,21 @@ def get_summary_by_rate_cell(sfy_filter: Optional[int] = None) -> pd.DataFrame:
     summary['total_members'] = summary['member_months'] / 12
     summary.columns = ['SFY', 'Rate Cell', 'Member Months', 'Total Savings', 'Total Members']
     return summary
+
+
+def get_summary_by_period() -> pd.DataFrame:
+    """Get savings summary for each individual rate period (useful for SFY 2024 sub-periods)."""
+    df = analyze_savings()
+
+    summary = df.groupby(['sfy_id', 'period_name']).agg({
+        'member_months': 'sum',
+        'dollar_savings': 'sum',
+        'base_pmpm': 'mean',
+        'mcs_factor': 'mean',
+    }).reset_index()
+
+    summary.columns = ['SFY', 'Period', 'Member Months', 'Total Savings', 'Avg Base PMPM', 'Avg MCS Factor']
+    return summary.sort_values(['SFY', 'Period'])
 
 
 def get_contribution_summary_by_sfy() -> pd.DataFrame:

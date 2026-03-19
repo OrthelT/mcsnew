@@ -8,20 +8,20 @@ EXECUTIVE SUMMARY
 Analysis Period: SFY 2022-2026
 
 OVERALL DOLLAR IMPACT:
-  Cost Trend Impact:        $  3,739,198,307  ( 39.8%)
-  Program Changes Impact:   $  4,205,210,983  ( 44.7%)
-  Managed Care Savings:     $ -1,458,487,642  ( 15.5%)
+  Cost Trend Impact:        $  3,510,463,335  ( 38.0%)
+  Program Changes Impact:   $  4,284,330,932  ( 46.3%)
+  Managed Care Savings:     $ -1,455,386,639  ( 15.7%)
   ───────────────────────────────────────────────────────
-  Net Change from Base:     $  6,485,921,648
+  Net Change from Base:     $  6,339,407,628
 
 CONTRIBUTION BY FISCAL YEAR
 ----------------------------------------
 
 SFY 2022:
-  Trend:             $ 617,477,374  ( 23.2%)
-  Program Changes:   $1,581,316,155  ( 59.4%)
-  MCS:               $-462,675,971  ( 17.4%)
-  Net Change:        $1,736,117,558
+  Trend:             $ 430,350,775  ( 17.7%)
+  Program Changes:   $1,551,936,966  ( 63.8%)
+  MCS:               $-451,476,012  ( 18.6%)
+  Net Change:        $1,530,811,730
 
 SFY 2023:
   Trend:             $ 725,762,822  ( 23.4%)
@@ -30,10 +30,10 @@ SFY 2023:
   Net Change:        $1,734,980,263
 
 SFY 2024:
-  Trend:             $ 612,229,458  ( 54.5%)
-  Program Changes:   $ 330,182,126  ( 29.4%)
-  MCS:               $-180,140,100  ( 16.0%)
-  Net Change:        $ 762,271,484
+  Trend:             $ 570,621,085  ( 53.9%)
+  Program Changes:   $ 315,740,261  ( 29.8%)
+  MCS:               $-172,278,934  ( 16.3%)
+  Net Change:        $ 714,082,412
 
 SFY 2025:
   Trend:             $ 882,353,580  ( 77.0%)
@@ -42,17 +42,17 @@ SFY 2025:
   Net Change:        $1,067,411,959
 
 SFY 2026:
-  Trend:             $ 901,375,073  ( 65.7%)
-  Program Changes:   $ 377,055,512  ( 27.5%)
-  MCS:               $ -93,290,201  (  6.8%)
-  Net Change:        $1,185,140,384
+  Trend:             $ 901,375,073  ( 59.7%)
+  Program Changes:   $ 499,996,514  ( 33.1%)
+  MCS:               $-109,250,323  (  7.2%)
+  Net Change:        $1,292,121,265
 
 KEY INSIGHTS
 ----------------------------------------
 
-- Cost trend is the primary driver, contributing 39.8% to rate changes
-- Managed care savings offset 15.5% of cost increases
-- Program changes contribute 44.7% to overall cost movement
-- Net impact: $6485.9M change from base capitation rates
+- Cost trend is the primary driver, contributing 38.0% to rate changes
+- Managed care savings offset 15.7% of cost increases
+- Program changes contribute 46.3% to overall cost movement
+- Net impact: $6339.4M change from base capitation rates
 
 ================================================================================
